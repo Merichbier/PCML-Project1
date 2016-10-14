@@ -7,7 +7,7 @@ import numpy as np
 import costs
 
 
-def compute_stoch_gradient(y, tx, w):
+def compute_gradient(y, tx, w):
     e = y - np.dot(tx, w)
     n = len(y)
     
