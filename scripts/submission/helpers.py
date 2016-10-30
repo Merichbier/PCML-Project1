@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """some helper functions."""
 import numpy as np
-from costs import *
 
 
 def compute_gradient(y, tx, w):
@@ -18,58 +17,6 @@ def sigmoid(t):
     return 1 / (1 + np.exp(-t))
 
 
-def compute_gradient_inv_log_likelihood(y, tx, w):
-    """compute the gradient of the loss by inverse log likelihood."""
-    return tx.T @ (sigmoid(tx @ w) - y)
-
-
-def compute_hessian(y, tx, w):
-    """return the hessian of the loss function."""
-    s = np.zeros([len(y), len(y)])
-
-    for i in range(len(y)):
-        s[i, i] = sigmoid(tx[i] @ w) * (1 - sigmoid(tx[i] @ w))
-
-    return tx.T @ s @ tx
-
-
-def param_logistic_regression(y, tx, w):
-    """return the loss, gradient, and hessian."""
-    return compute_loss_neg_log_likelihood(y, tx, w), compute_gradient_inv_log_likelihood(y, tx, w), compute_hessian(y, tx, w)
-
-
-def penalized_logistic_regression(y, tx, w, lambda_):
-    """return the loss, gradient, and hessian."""
-
-    new_loss = compute_loss_neg_log_likelihood(y, tx, w) + lambda_ * np.sum(w**2)
-    new_gradient = compute_gradient_inv_log_likelihood(y, tx, w) + 2 * lambda_ * np.sum(w)
-    new_hessian = compute_hessian(y, tx, w) + 2 * lambda_ * len(y)
-
-    return new_loss, new_gradient, new_hessian
-
-
-def learning_by_newton_method(y, tx, w, gamma):
-    """
-    Do one step on Newton's method.
-    return the loss and updated w.
-    """
-    loss, gradient, hessian = param_logistic_regression(y, tx, w)
-    w -= gamma * np.dot(np.linalg.inv(hessian), gradient)
-
-    return loss, w
-
-
-def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
-    """
-    Do one step of gradient descent, using the penalized logistic regression.
-    Return the loss and updated w.
-    """
-    loss, gradient, hessian = penalized_logistic_regression(y, tx, w, lambda_)
-    w -= gamma * np.dot(np.linalg.inv(hessian), gradient)
-
-    return loss, w
-
-
 def standardize(x, mean_x=None, std_x=None):
     """ Standardize the original data set."""
     if mean_x is None:
@@ -78,9 +25,8 @@ def standardize(x, mean_x=None, std_x=None):
     if std_x is None:
         std_x = np.std(x, axis=0)
     x[:, std_x > 0] = x[:, std_x > 0] / std_x[std_x > 0]
-    
-    tx = np.hstack((np.ones((x.shape[0], 1)), x))
-    return tx, mean_x, std_x
+
+    return x, mean_x, std_x
 
 
 def batch_iter(y, tx, batch_size, num_batches=None, shuffle=True):
@@ -122,6 +68,7 @@ def build_poly(x, degree):
 
     combinations = {}
 
+    # Add combinations of same column power
     for i in range(n * degree):
         if i < n:
             combinations[i] = [i]
@@ -133,11 +80,25 @@ def build_poly(x, degree):
                 cpt += 1
             combinations[i] = [col_number] * cpt
 
-    # Now we can fill a new matrix with the produts of the columns
-    # numbers computed previously
-    eval_poly = np.zeros(shape=(m, n * degree))
+    # Add combinations of products between columns
+    cpt = i + 1
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            combinations[cpt] = [i, j]
+            cpt = cpt + 1
+
+    # Now we can fill a new matrix with the column combinations
+    eval_poly = np.zeros(
+        shape=(m, n + len(combinations))
+    )
+
     for i, c in combinations.items():
         eval_poly[:, i] = x[:, c].prod(1)
+
+    # Add square root
+    for i in range(0, n):
+        eval_poly[:, len(combinations) + i] = np.abs(x[:, i]) ** 0.5
 
     return eval_poly
 
@@ -152,31 +113,42 @@ def na(x):
     return np.any(x == -999)
 
 
-def pos(x):
-    return np.all(x > 0)
-
-
-def impute_data(data):
+def impute_data(x_train, x_test):
     """ Replace missing values (NA) by the most frequent value of the column"""
-    for i in range(data.shape[1]):
+    for i in range(x_train.shape[1]):
         # If NA values in column
-        if na(data[:, i]) or na(data[:, i]):
-            msk_train = (data[:, i] != -999.)
+        if na(x_train[:, i]) or na(x_test[:, i]):
+            msk_train = (x_train[:, i] != -999.)
+            msk_test = (x_test[:, i] != -999.)
             # Replace NA values with most frequent value
-            values, counts = np.unique(data[msk_train, i], return_counts=True)
-            data[~msk_train, i] = values[np.argmax(counts)]
+            values, counts = np.unique(x_train[msk_train, i], return_counts=True)
+            x_train[~msk_train, i] = values[np.argmax(counts)]
+            x_test[~msk_test, i] = values[np.argmax(counts)]
 
-    return data
+    return x_train, x_test
 
 
-def process_data(data):
+def process_data(x_train, x_test, add_constant_col=True):
+    """
+    Impute missing data and compute inverse log values of positive columns
+    """
     # Impute missing data
-    data = impute_data(data)
+    x_train, x_test = impute_data(x_train, x_test)
 
     inv_log_cols = [0, 2, 5, 7, 9, 10, 13, 16, 19, 21, 23, 26]
 
     # Create inverse log values of features which are positive in value.
-    data_inv_log_cols = np.log(1 / (1 + data[:, inv_log_cols]))
-    data = np.hstack((data, data_inv_log_cols))
+    x_train_inv_log_cols = np.log(1 / (1 + x_train[:, inv_log_cols]))
+    x_train = np.hstack((x_train, x_train_inv_log_cols))
 
-    return data
+    x_test_inv_log_cols = np.log(1 / (1 + x_test[:, inv_log_cols]))
+    x_test = np.hstack((x_test, x_test_inv_log_cols))
+
+    x_train, mean_x_train, std_x_train = standardize(x_train)
+    x_test, mean_x_test, std_x_test = standardize(x_test, mean_x_train, std_x_train)
+
+    if (add_constant_col is True):
+        x_train = add_constant_column(x_train)
+        x_test = add_constant_column(x_test)
+
+    return x_train, x_test

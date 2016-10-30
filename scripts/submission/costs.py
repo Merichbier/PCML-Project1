@@ -2,12 +2,16 @@
 """a function used to compute the loss."""
 
 import numpy as np
-from helpers import sigmoid
+
+
+def sigmoid(t):
+    """apply sigmoid function on t."""
+    return 1 / (1 + np.exp(-t))
 
 
 def calculate_mse(e):
     """Calculate the mse for vector e."""
-    return 1/2*np.mean(e**2)
+    return 1 / 2 * np.mean(e ** 2)
 
 
 def calculate_mae(e):
@@ -17,7 +21,9 @@ def calculate_mae(e):
 
 def compute_loss_neg_log_likelihood(y, tx, w):
     """compute the cost by negative log likelihood."""
-    return -np.sum(y * np.log(sigmoid(tx.dot(w))) + (1 - y) * np.log(1 - sigmoid(tx.dot(w))))
+    return -np.sum(
+        y * np.log(sigmoid(tx.dot(w))) + (1 - y) * np.log(1 - sigmoid(tx.dot(w)))
+    )
 
 
 def compute_loss(y, tx, w):
@@ -27,4 +33,3 @@ def compute_loss(y, tx, w):
     """
     e = y - tx.dot(w)
     return calculate_mse(e)
-    # return calculate_mae(e)

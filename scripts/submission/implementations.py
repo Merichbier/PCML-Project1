@@ -5,8 +5,8 @@ Authors: Victor Faramond, Dario Anongba Varela, Mathieu Schopfer
 """
 
 import numpy as np
-from costs import *
-from helpers import *
+from costs import compute_loss, compute_loss_neg_log_likelihood
+from helpers import compute_gradient, batch_iter, sigmoid
 
 
 def least_squares_gd(y, tx, initial_w, max_iters, gamma):
@@ -71,45 +71,36 @@ def ridge_regression(y, tx, lambda_):
     return w, loss
 
 
-def logistic_regression(y, tx, gamma, max_iters):
-    # init parameters
-    threshold = 1e-8
-    losses = []
-    loss = 0
+def logistic_regression(y, tx, initial_w, max_iters, gamma):
+    """Logistic regression"""
+    w = initial_w
+    sample_count = len(y)
+    batch_size = 1000
 
-    # build tx
-    tx = np.c_[np.ones((y.shape[0], 1)), tx]
-    w = np.zeros((tx.shape[1], 1))
+    batch_count = int(sample_count / batch_size) * max_iters
 
-    # start the logistic regression
-    for i in range(max_iters):
-        # get loss and update w.
-        loss, w = learning_by_newton_method(y, tx, w, gamma)
-        # converge criteria
-        losses.append(loss)
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
-            break
+    coef = gamma / batch_size
+    for mini_y, mini_tx in batch_iter(y, tx, batch_size, batch_count, shuffle=False):
+        grad = mini_tx.T @ (sigmoid(mini_tx @ w) - mini_y)
+        w -= coef * grad
 
-    return w, loss
+    return w, compute_loss_neg_log_likelihood(y, tx, w)
 
 
-def reg_logistic_regression(y, tx, lambda_, gamma, max_iters):
-    # init parameters
-    threshold = 1e-8
-    losses = []
-    loss = 0
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+    """Regularized logistic regression"""
+    if lambda_ == 0:
+        return logistic_regression(y, tx, initial_w, max_iters, gamma)
 
-    # build tx
-    tx = np.c_[np.ones((y.shape[0], 1)), tx]
-    w = np.zeros((tx.shape[1], 1))
+    w = initial_w
+    sample_count = len(y)
+    batch_size = 1000
 
-    # start the logistic regression
-    for i in range(max_iters):
-        # get loss and update w.
-        loss, w = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
-        # converge criteria
-        losses.append(loss)
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
-            break
+    batch_count = int(sample_count / batch_size) * max_iters
 
-    return w, loss
+    coef = gamma / batch_size
+    for mini_y, mini_tx in batch_iter(y, tx, batch_size, batch_count, shuffle=False):
+        grad = mini_tx.T @ (sigmoid(mini_tx @ w) - mini_y) - 2 * lambda_ * w
+        w -= coef * grad
+
+    return w, compute_loss_neg_log_likelihood(y, tx, w)
