@@ -1,0 +1,64 @@
+\documentclass[10pt,conference,compsocconf]{IEEEtran}
+
+\usepackage{hyperref}
+\usepackage{graphicx}	% For figure environment
+
+
+\begin{document}
+\title{Machine Learning Course - Project 1}
+
+\author{
+  Victor Faramond, Mathieu Schopfer, Dario Anongba Varela\\
+  \textit{Department of Computer Science, EPFL Lausanne, Switzerland}
+}
+
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+
+\section{Introduction}
+
+\section{Models and Methods}
+
+\subsection{Data}
+
+\subsubsection{Available data}
+Two sets of data were provided in the form of csv files, a \textit{training} and a \textit{test} set. The input of both sets consists in $D=30$ feature columns $\mathbf{x}_n$. In the training set, an additionnal output column $y_n$ is provided. The output is binary (-1 or 1), depending whether the recorded signal corresponds to an actual event (1) or to background noise (-1).
+
+\subsubsection{Data pre-processing}
+Impute missing data: for a given input column $i \in {1, ..., D}$, missing values are replaced in both the training and test sets by the value appearing most frequently in column $i$ of the training set.
+
+Standardize
+
+Compute inverse log of positive features
+
+\subsection{Models}
+\subsubsection{Gradient and stochastic gradient descent}
+\subsubsection{Least squares}
+\subsubsection{Ridge regression}
+Polynom building
+\subsubsection{Logistic and penalized logistic regression}
+
+\subsection{Cross validation}
+
+To train and test the various models presented hereabove, a 10-fold cross validation method was used. This consists in splitting the training data set into ten subsets of equivalent size. Then 9 subsets are used to train the models, the last one to test it. This proces is repeated for all 10 combinations of training and testing subsets.
+
+\subsection{Assement of models accuracy}
+
+At each step of the 10-fold cross validation, the positives rate was calculated on the test subset. The positive rates is simply given as the number of model ouptuts $y_n$ agreeing with the (known) expected output divided by the total number of events in the subset.
+
+Then the mean and variance of positives rates was calculated and retained as the model accuracy score.
+
+\subsection{Choice of model for submission}
+
+The model that was choosen for submission was that achieving the highest positives rate score.
+
+\section{Results}
+
+
+
+\section{Summary}
+
+
+\end{document}
