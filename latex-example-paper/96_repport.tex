@@ -14,26 +14,29 @@
 
 \maketitle
 
-\begin{abstract}
-\end{abstract}
-
 \section{Introduction}
 
-\section{Data}
+\section{Models and Methods}
 
-\subsection{Available data}
+\subsection{Data}
+
 Two sets of data were provided in the form of csv files, a \textit{training} and a \textit{test} set. The input of both sets consists in $D=30$ feature columns $\mathbf{x}_n$. In the training set, an additionnal output column $y_n$ is provided. The output is binary (-1 or 1), depending whether the recorded signal corresponds to an actual event (1) or to background noise (-1).
 
 \subsection{Pre-processing}
-
-\subsubsection{Missingness}
-After an exploratory data analysis phase, we found that only a quarter of the dataset are complete cases. 11 variables out of 30 have missing records which are designated as $-999$. However, we found a clear structure about these missing values. Most of them are related to the jet properties. If an event contains no jet at all, all the jet related features are missing. If an event contains only one jet, the leading jet features are present but the subleading jet features are missing. Therefore, we decided to split the dataset into different subsets corresponding to the number of jets, drop the columns with missing values and train a specific classifier on each subset.
+\subsubsection{Missing data} % Je crois que "missingness" signifie "disparition" (genre d'enfant)
+After an exploratory data analysis phase, we found that only a quarter of the dataset is complete. 11 variables out of 30 have missing records which are designated by $-999$. However, we found a clear structure about these missing values. Most of them are related to the \textit{jet} properties. If an event contains no jet at all, all the jet related features are missing. If an event contains only one jet, the leading jet features are present but the subleading jet features are missing. Therefore, in the ridge regression case (see below), we decided to split the dataset into three different subsets corresponding to the jet values $\{0\}$, $\{1\}$ and $\{2, 3\}$, drop the columns with missing values and train a specific classifier on each subset.
 
 \subsubsection{Missing values imputing}
-For a given input column $i \in {1, ..., D}$, missing values are replaced in both the training and test sets by the value appearing most frequently in column $i$ of the training set.
+Missing values are first imputed. For a given input column $x_{\bullet,i}$ ($i \in \{1, ..., D\}$) missing values are replaced in both the training and the test sets by the value appearing most frequently in column $x_{\bullet,i}$ of the training set.
 
 \subsubsection{Feature engineering}
-For all the columns which are positive in value, we added a corresponding column with the inverse log values of the column. Thus, we can reduce the range of the values.
+For all the positive value columns, we added a corresponding column with the inverse log values of the column,
+
+\[
+x_{\bullet,i} \to \frac{1}{1+\log x_{\bullet,i}}.
+\]
+
+Thus, we can reduce the range of the values.
 
 \subsubsection{Standardization}
 We standardized both the training and test datasets using the mean and the variance of the training set.
@@ -41,16 +44,33 @@ We standardized both the training and test datasets using the mean and the varia
 \section{Machine learning models}
 
 \subsection{Models}
-\subsubsection{Gradient and stochastic gradient descent}
-\subsubsection{Least squares}
-\subsubsection{Ridge regression}
-Before fitting the ridge regression model, we added polynomial features to our training and test sets. This consists in adding new columns including: the square root of each column, the products between each column and given a degree parameter $d$, each column to the power $i \in {1, ..., d}$.
-\linebreak
-The parameter $d$ is different for each subset of data and has been defined using a grid search with values of $d \in {1, ..., 11}$.
-\linebreak
-The parameter $\lambda$ has also been defined using a grid search with values of $\lambda \in {1e-9, ..., 1e+1}$.
 
-\subsubsection{Logistic and penalized logistic regression}
+The following models were tested:
+\begin{itemize}
+\item Gradient and stochastic gradient descent, $\gamma=0.01$
+\item Least squares
+\item Ridge regression, with polynom basis, $\lambda=0.6$
+\item Logistic and regularized logistic regression, $\gamma=0.6, \lambda=0.04$
+\end{itemize}
+
+\subsubsection{Ridge regression}
+Before fitting the ridge regression model, we added polynomial features to our training and test sets:
+
+\begin{itemize}
+\item The square root $\sqrt{\mathbf{x}_n}$ of the feature.
+\item $\mathbf{x}_n^k$, for $k\in \{1, ..., d\}$. The parameter $d$ is different for each subset of data (regarding the number of jets) and has been defined using a grid search with values of $d \in \{1, ..., 11\}$. See figure \ref{jet_2}.
+\item The products $x_{\bullet,i}\cdot x_{\bullet,j}$, $\forall i,j \in \{1, ..., D\}$.
+\end{itemize}
+
+\begin{figure*}[htp]
+\caption{\label{jet_2} Mean accuracy of the ridge regression model on data subset verifying jet=?, for various values of maximal polynomial degree.}
+\end{figure*}
+
+The parameter $\lambda$ was also defined using a grid search with values of $\lambda \in {1e-9, ..., 1e+1}$. See figure \ref{jet_0}.
+
+\begin{figure*}[htp]
+\caption{\label{jet_0} Mean accuracy of the ridge regression model on data subset verifying jet=0, for various values of $\lambda$.}
+\end{figure*}
 
 \subsection{Cross validation}
 
@@ -68,9 +88,29 @@ The model that was choosen for submission was that achieving the highest positiv
 
 \section{Results}
 
+Table \ref{res_table} summarizes the results for all models. Regarding these results, the ridge regression model was selected for submission.
 
-
-\section{Summary}
-
+\begin{table*}[htp]
+\centering
+\begin{tabular}[c]{|c|c|c|}
+  \hline
+  \textbf{Model} & \textbf{Mean accuracy} & \textbf{Variance} \\
+  \hline
+  Gradient descent & 0.763168 & 0.000006 \\
+  \hline
+  Stochastic gradient descent & 0.686248 & 0.000562 \\
+  \hline
+  Least squares & 0.776600 & 0.000007 \\
+  \hline
+  Rigde regression & 0.833556 & 0.000002 \\
+  \hline
+  Logistic regression & 0.679196 & 0.000004 \\
+  \hline
+  Regularized logistic regression & 0.679196 & 0.000004 \\
+  
+  \hline
+\end{tabular}
+\caption{\label{res_table} Mean accuracy and standard deviation for all tested models.}
+\end{table*}
 
 \end{document}
