@@ -14,7 +14,7 @@ def compute_gradient(y, tx, w):
 
 def sigmoid(t):
     """apply sigmoid function on t."""
-    return 1 / (1 + np.exp(-t))
+    return np.exp(-np.logaddexp(0, -t))
 
 
 def standardize(x, mean_x=None, std_x=None):
@@ -128,6 +128,38 @@ def impute_data(x_train, x_test):
     return x_train, x_test
 
 
+def impute_data_single(data):
+    """ Replace missing values (NA) by the most frequent value of the column"""
+    for i in range(data.shape[1]):
+        # If NA values in column
+        if na(data[:, i]):
+            msk_data = (data[:, i] != -999.)
+            # Replace NA values with most frequent value
+            values, counts = np.unique(data[msk_data, i], return_counts=True)
+            data[~msk_data, i] = values[np.argmax(counts)]
+
+    return data
+
+
+def process_data_single(data, add_constant_col=True):
+    """
+    Impute missing data and compute inverse log values of positive columns
+    """
+    # Impute missing data
+    data = impute_data_single(data)
+
+    inv_log_cols = [0, 2, 5, 7, 9, 10, 13, 16, 19, 21, 23, 26]
+
+    # Create inverse log values of features which are positive in value.
+    data_inv_log_cols = np.log(1 / (1 + data[:, inv_log_cols]))
+    data = np.hstack((data, data_inv_log_cols))
+
+    if add_constant_col is True:
+        data = add_constant_column(data)
+
+    return data
+
+
 def process_data(x_train, x_test, add_constant_col=True):
     """
     Impute missing data and compute inverse log values of positive columns
@@ -147,7 +179,7 @@ def process_data(x_train, x_test, add_constant_col=True):
     x_train, mean_x_train, std_x_train = standardize(x_train)
     x_test, mean_x_test, std_x_test = standardize(x_test, mean_x_train, std_x_train)
 
-    if (add_constant_col is True):
+    if add_constant_col is True:
         x_train = add_constant_column(x_train)
         x_test = add_constant_column(x_test)
 
