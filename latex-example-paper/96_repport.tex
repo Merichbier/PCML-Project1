@@ -19,32 +19,44 @@
 
 \section{Introduction}
 
-\section{Models and Methods}
+\section{Data}
 
-\subsection{Data}
-
-\subsubsection{Available data}
+\subsection{Available data}
 Two sets of data were provided in the form of csv files, a \textit{training} and a \textit{test} set. The input of both sets consists in $D=30$ feature columns $\mathbf{x}_n$. In the training set, an additionnal output column $y_n$ is provided. The output is binary (-1 or 1), depending whether the recorded signal corresponds to an actual event (1) or to background noise (-1).
 
-\subsubsection{Data pre-processing}
-Impute missing data: for a given input column $i \in {1, ..., D}$, missing values are replaced in both the training and test sets by the value appearing most frequently in column $i$ of the training set.
+\subsection{Pre-processing}
 
-Standardize
+\subsubsection{Missingness}
+After an exploratory data analysis phase, we found that only a quarter of the dataset are complete cases. 11 variables out of 30 have missing records which are designated as $-999$. However, we found a clear structure about these missing values. Most of them are related to the jet properties. If an event contains no jet at all, all the jet related features are missing. If an event contains only one jet, the leading jet features are present but the subleading jet features are missing. Therefore, we decided to split the dataset into different subsets corresponding to the number of jets, drop the columns with missing values and train a specific classifier on each subset.
 
-Compute inverse log of positive features
+\subsubsection{Missing values imputing}
+For a given input column $i \in {1, ..., D}$, missing values are replaced in both the training and test sets by the value appearing most frequently in column $i$ of the training set.
+
+\subsubsection{Feature engineering}
+For all the columns which are positive in value, we added a corresponding column with the inverse log values of the column. Thus, we can reduce the range of the values.
+
+\subsubsection{Standardization}
+We standardized both the training and test datasets using the mean and the variance of the training set.
+
+\section{Machine learning models}
 
 \subsection{Models}
 \subsubsection{Gradient and stochastic gradient descent}
 \subsubsection{Least squares}
 \subsubsection{Ridge regression}
-Polynom building
+Before fitting the ridge regression model, we added polynomial features to our training and test sets. This consists in adding new columns including: the square root of each column, the products between each column and given a degree parameter $d$, each column to the power $i \in {1, ..., d}$.
+\linebreak
+The parameter $d$ is different for each subset of data and has been defined using a grid search with values of $d \in {1, ..., 11}$.
+\linebreak
+The parameter $\lambda$ has also been defined using a grid search with values of $\lambda \in {1e-9, ..., 1e+1}$.
+
 \subsubsection{Logistic and penalized logistic regression}
 
 \subsection{Cross validation}
 
-To train and test the various models presented hereabove, a 10-fold cross validation method was used. This consists in splitting the training data set into ten subsets of equivalent size. Then 9 subsets are used to train the models, the last one to test it. This proces is repeated for all 10 combinations of training and testing subsets.
+To train and test the various models presented hereabove, a 10-fold cross validation method was used. This consists in splitting the training data set into ten subsets of equivalent size. Then 9 subsets are used to train the models, the last one to test it. This proces is repeated for all 10 combinations of training and testing subsets. This allows us to make sure a model is stable and that we did not overfit on the training set.
 
-\subsection{Assement of models accuracy}
+\subsection{Assessment of models accuracy}
 
 At each step of the 10-fold cross validation, the positives rate was calculated on the test subset. The positive rates is simply given as the number of model ouptuts $y_n$ agreeing with the (known) expected output divided by the total number of events in the subset.
 
