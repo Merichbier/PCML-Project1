@@ -4,8 +4,7 @@ import numpy as np
 
 
 def compute_gradient(y, tx, w):
-    """ Linear regression using gradient descent
-    """
+    """ Linear regression using gradient descent. """
     e = y - tx.dot(w)
     n = len(y)
 
@@ -13,12 +12,12 @@ def compute_gradient(y, tx, w):
 
 
 def sigmoid(t):
-    """apply sigmoid function on t."""
+    """ Apply sigmoid function on t. """
     return np.exp(-np.logaddexp(0, -t))
 
 
 def standardize(x, mean_x=None, std_x=None):
-    """ Standardize the original data set."""
+    """ Standardize the original data set. """
     if mean_x is None:
         mean_x = np.mean(x, axis=0)
     x = x - mean_x
@@ -104,60 +103,33 @@ def build_poly(x, degree):
 
 
 def add_constant_column(x):
-    """ Prepend a column of 1 to the matrix """
+    """ Prepend a column of 1 to the matrix. """
     return np.hstack((np.ones((x.shape[0], 1)), x))
 
 
 def na(x):
-    """ Identifies missing values """
+    """ Identifies missing values. """
     return np.any(x == -999)
 
 
 def impute_data(x_train, x_test):
-    """ Replace missing values (NA) by the most frequent value of the column"""
+    """ Replace missing values (NA) by the most frequent value of the column. """
     for i in range(x_train.shape[1]):
         # If NA values in column
-        if na(x_train[:, i]) or na(x_test[:, i]):
+        if na(x_train[:, i]):
             msk_train = (x_train[:, i] != -999.)
             msk_test = (x_test[:, i] != -999.)
             # Replace NA values with most frequent value
             values, counts = np.unique(x_train[msk_train, i], return_counts=True)
-            x_train[~msk_train, i] = values[np.argmax(counts)]
-            x_test[~msk_test, i] = values[np.argmax(counts)]
+            # If there are values different from NA
+            if (len(values) > 1):
+                x_train[~msk_train, i] = values[np.argmax(counts)]
+                x_test[~msk_test, i] = values[np.argmax(counts)]
+            else:
+                x_train[~msk_train, i] = 0
+                x_test[~msk_test, i] = 0
 
     return x_train, x_test
-
-
-def impute_data_single(data):
-    """ Replace missing values (NA) by the most frequent value of the column"""
-    for i in range(data.shape[1]):
-        # If NA values in column
-        if na(data[:, i]):
-            msk_data = (data[:, i] != -999.)
-            # Replace NA values with most frequent value
-            values, counts = np.unique(data[msk_data, i], return_counts=True)
-            data[~msk_data, i] = values[np.argmax(counts)]
-
-    return data
-
-
-def process_data_single(data, add_constant_col=True):
-    """
-    Impute missing data and compute inverse log values of positive columns
-    """
-    # Impute missing data
-    data = impute_data_single(data)
-
-    inv_log_cols = [0, 2, 5, 7, 9, 10, 13, 16, 19, 21, 23, 26]
-
-    # Create inverse log values of features which are positive in value.
-    data_inv_log_cols = np.log(1 / (1 + data[:, inv_log_cols]))
-    data = np.hstack((data, data_inv_log_cols))
-
-    if add_constant_col is True:
-        data = add_constant_column(data)
-
-    return data
 
 
 def process_data(x_train, x_test, add_constant_col=True):
@@ -184,3 +156,17 @@ def process_data(x_train, x_test, add_constant_col=True):
         x_test = add_constant_column(x_test)
 
     return x_train, x_test
+
+
+def get_jet_masks(x):
+    """
+    Returns 4 masks corresponding to the rows of x with a jet value
+    of 0, 1, 2 and 3 respectively.
+    """
+    jet_values = np.unique(x[:, 22])
+    msk_jets = {}
+
+    for idx, jet_value in enumerate(jet_values):
+        msk_jets[idx] = (x[:, 22] == jet_value)
+
+    return msk_jets
