@@ -16,6 +16,8 @@
 
 \section{Introduction}
 
+This report concerns project 1 of PCML. This project consisted in using machine learning algorithms on datasets provided by the CERN. The aim was to classify events measured by the ATLAS experiment to distinguish events originating in the Higgs boson decay from background.
+
 \section{Models and Methods}
 
 \subsection{Data}
@@ -58,18 +60,22 @@ Before fitting the ridge regression model, we added polynomial features to our t
 
 \begin{itemize}
 \item The square root $\sqrt{\mathbf{x}_n}$ of the feature.
-\item $\mathbf{x}_n^k$, for $k\in \{1, ..., d\}$. The parameter $d$ is different for each subset of data (regarding the number of jets) and has been defined using a grid search with values of $d \in \{1, ..., 11\}$. See figure \ref{jet_2}.
+\item $\mathbf{x}_n^k$, for $k\in \{1, ..., d\}$. The parameter $d$ is different for each subset of data (regarding the number of jets) and has been defined using a grid search with values of $d \in \{1, ..., 11\}$. See figure \ref{jet_0_degress}.
 \item The products $x_{\bullet,i}\cdot x_{\bullet,j}$, $\forall i,j \in \{1, ..., D\}$.
 \end{itemize}
 
 \begin{figure*}[htp]
-\caption{\label{jet_2} Mean accuracy of the ridge regression model on data subset verifying jet=?, for various values of maximal polynomial degree.}
+\centering
+\includegraphics[scale=0.5]{grid_search_jet_0_degrees.png}
+\caption{\label{jet_0_degress} Mean accuracy of the ridge regression model on data subset verifying jet=0, for various values of maximal polynomial degree.}
 \end{figure*}
 
-The parameter $\lambda$ was also defined using a grid search with values of $\lambda \in {1e-9, ..., 1e+1}$. See figure \ref{jet_0}.
+The parameter $\lambda$ was also defined using a grid search with values of $\lambda \in {1e-9, ..., 1e+1}$. See figure \ref{jet_0_lambdas}.
 
 \begin{figure*}[htp]
-\caption{\label{jet_0} Mean accuracy of the ridge regression model on data subset verifying jet=0, for various values of $\lambda$.}
+\centering
+\includegraphics[scale=0.5]{grid_search_jet_0_lambdas.png}
+\caption{\label{jet_0_lambdas} Mean accuracy of the ridge regression model on data subset verifying jet=0, for various values of $\lambda$.}
 \end{figure*}
 
 \subsection{Cross validation}
