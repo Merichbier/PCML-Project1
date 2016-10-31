@@ -163,10 +163,8 @@ def get_jet_masks(x):
     Returns 4 masks corresponding to the rows of x with a jet value
     of 0, 1, 2 and 3 respectively.
     """
-    jet_values = np.unique(x[:, 22])
-    msk_jets = {}
-
-    for idx, jet_value in enumerate(jet_values):
-        msk_jets[idx] = (x[:, 22] == jet_value)
-
-    return msk_jets
+    return {
+        0: x[:, 22] == 0,
+        1: x[:, 22] == 1,
+        2: np.logical_or(x[:, 22] == 2, x[:, 22] == 3)
+    }

@@ -25,9 +25,9 @@ msks_jet_train = get_jet_masks(tX_train)
 msks_jet_test = get_jet_masks(tX_test)
 
 # Ridge regression parameters for each subset
-lambdas = [0.002, 0.001, 0.001, 0.01]
+lambdas = [0.002, 0.001, 0.001]
 # Polynomial features degree for each subset
-degrees = [4, 7, 9, 9]
+degrees = [4, 7, 9]
 
 # Vector to store the final prediction
 y_pred = np.zeros(tX_test.shape[0])
